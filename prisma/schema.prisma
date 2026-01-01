@@ -1,0 +1,998 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "./generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model AcademicPartner {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  display_name  String?   @unique
+  description   String?
+  logo_url      String?
+  address       String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  updated_by_id String?
+  updated_by    User?     @relation(fields: [updated_by_id], references: [id])
+  faculties     Faculty[]
+  programs      Program[]
+  news_items    NewsItem[]  // Newsletter system
+}
+
+model Enterprise {
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
+  note          String?
+  address       String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  updated_by_id String?
+  updated_by    User?     @relation(fields: [updated_by_id], references: [id])
+  programs      Program[]
+}
+
+model Program {
+  id                  String          @id @default(uuid())
+  name                String
+  description         String?
+  program_key         String          @unique
+  short_name          String          @default("Program")
+  status              ProgramStatus   @default(DRAFT)
+  type                ProgramType     @default(OPEN)
+  enterprise_id       String?
+  academic_partner_id String
+  created_at          DateTime        @default(now())
+  updated_at          DateTime        @updatedAt
+  updated_by_id       String?
+  cohorts             Cohort[]
+  key_features        List[]
+  academic_partner    AcademicPartner @relation(fields: [academic_partner_id], references: [id])
+  enterprise          Enterprise?     @relation(fields: [enterprise_id], references: [id])
+  updated_by          User?           @relation(fields: [updated_by_id], references: [id])
+
+  @@unique([program_key, id])
+}
+
+model List {
+  id            String   @id @default(uuid())
+  name          String
+  program_id    String?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  updated_by_id String?
+  Program       Program? @relation(fields: [program_id], references: [id])
+  updated_by    User?    @relation(fields: [updated_by_id], references: [id])
+}
+
+model Cohort {
+  id                           String                         @id @default(uuid())
+  status                       WorkStatus                     @default(DRAFT)
+  name                         String?
+  description                  String?
+  start_date                   DateTime?
+  end_date                     DateTime?
+  format                       String?
+  duration                     String?
+  location                     String?
+  cohort_key                   String                         @unique
+  cohort_num                   Int                            @default(1)
+  program_id                   String
+  max_cohort_size              Int                            @default(0)
+  created_at                   DateTime                       @default(now())
+  updated_at                   DateTime                       @updatedAt
+  media_section_id             String?                        @unique
+  microsite_section_id         String?                        @unique
+  overview_section_id          String?                        @unique
+  benefits_section_id          String?                        @unique
+  curriculum_section_id        String?                        @unique
+  statistics_section_id        String?                        @unique
+  faculty_section_id           String?                        @unique
+  industry_experts_section_id  String?                        @unique
+  certification_section_id     String?                        @unique
+  testimonial_section_id       String?                        @unique
+  who_should_apply_section_id  String?                        @unique
+  cohort_branding_id           String?                        @unique
+  design_curriculum_section_id String?                        @unique
+  ownerId                      String?
+  updated_by_id                String?
+  benefits_section             CohortBenefitsSection?         @relation(fields: [benefits_section_id], references: [id])
+  certification_section        CohortCertificationSection?    @relation(fields: [certification_section_id], references: [id])
+  cohort_branding              CohortBranding?                @relation(fields: [cohort_branding_id], references: [id])
+  curriculum_section           CohortCurriculumSection?       @relation(fields: [curriculum_section_id], references: [id])
+  design_curriculum_section    DesignCohortCurriculumSection? @relation(fields: [design_curriculum_section_id], references: [id])
+  faculty_section              CohortFacultySection?          @relation(fields: [faculty_section_id], references: [id])
+  industry_experts_section     CohortIndustryExpertsSection?  @relation(fields: [industry_experts_section_id], references: [id])
+  media_section                CohortMediaSection?            @relation(fields: [media_section_id], references: [id])
+  microsite_section            CohortSectionMicrositeSection? @relation(fields: [microsite_section_id], references: [id])
+  overview_section             CohortOverviewSection?         @relation(fields: [overview_section_id], references: [id])
+  owner                        User?                          @relation("owner", fields: [ownerId], references: [id])
+  program                      Program                        @relation(fields: [program_id], references: [id])
+  statistics_section           CohortStatisticsSection?       @relation(fields: [statistics_section_id], references: [id])
+  testimonial_section          CohortTestimonialSection?      @relation(fields: [testimonial_section_id], references: [id])
+  updated_by                   User?                          @relation("updated_by", fields: [updated_by_id], references: [id])
+  who_should_apply_section     CohortWhoShouldApplySection?   @relation(fields: [who_should_apply_section_id], references: [id])
+  generic_sections             CohortGenericSection[]
+  section_order                CohortSectionOrder[]
+  fees                         CohortFee[]                    @relation("CohortToCohortFee")
+  
+  // Newsletter System Relations
+  participants                 Participant[]
+  news_items                   NewsItem[]
+  newsletters_sent             NewsletterSent[]
+
+  @@unique([cohort_key, id])
+}
+
+model CohortBranding {
+  id                    String              @id @default(uuid())
+  primary_color_id      String?             @unique
+  secondary_color_id    String?             @unique
+  background_color_id   String?             @unique
+  default_border_radius Int
+  font_name             String?
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @updatedAt
+  updated_by_id         String?
+  cohort                Cohort?
+  background_color      ContentColorsBlock? @relation("background_color", fields: [background_color_id], references: [id])
+  primary_color         ContentColorsBlock? @relation("primary_color", fields: [primary_color_id], references: [id])
+  secondary_color       ContentColorsBlock? @relation("secondary_color", fields: [secondary_color_id], references: [id])
+  updated_by            User?               @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortMediaSection {
+  id                      String   @id @default(uuid())
+  title                   String
+  description             String?
+  banner_image_url        String?
+  banner_image_width      Int?
+  brochure_url            String?
+  university_logo_url     String?
+  university_logo_width   Int?
+  university_banner_url   String?
+  university_banner_width Int?
+  is_section_visible      Boolean  @default(true)
+  created_at              DateTime @default(now())
+  updated_at              DateTime @updatedAt
+  updated_by_id           String?
+  cohort                  Cohort?
+  updated_by              User?    @relation(fields: [updated_by_id], references: [id])
+}
+
+model ContentColorsBlock {
+  id                                 String          @id @default(uuid())
+  background_color                   String?
+  text_color                         String
+  color_type                         String?         @default("hex")
+  created_at                         DateTime        @default(now())
+  updated_at                         DateTime        @updatedAt
+  updated_by_id                      String?
+  cohort_content_branding_background CohortBranding? @relation("background_color")
+  cohort_content_branding            CohortBranding? @relation("primary_color")
+  cohort_content_branding_secondary  CohortBranding? @relation("secondary_color")
+  updated_by                         User?           @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortSectionMicrositeSection {
+  id                     String           @id @default(uuid())
+  title                  String
+  description            String?
+  visibility_start_date  DateTime?
+  visibility_end_date    DateTime?
+  custom_domain          String?          @unique
+  created_at             DateTime         @default(now())
+  updated_at             DateTime         @updatedAt
+  cohort_enrollment_link String?
+  updated_by_id          String?
+  bottom_description     String?
+  top_description        String?
+  cohort                 Cohort?
+  updated_by             User?            @relation(fields: [updated_by_id], references: [id])
+  pages                  MicrositePages[]
+}
+
+model MicrositePages {
+  id             String                         @id @default(uuid())
+  title          String
+  slug           String                         @unique
+  is_active      Boolean                        @default(true)
+  parent_id      String?
+  created_at     DateTime                       @default(now())
+  updated_at     DateTime                       @updatedAt
+  updated_by_id  String?
+  content        String?
+  parent_section CohortSectionMicrositeSection? @relation(fields: [parent_id], references: [id])
+  updated_by     User?                          @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortOverviewSection {
+  id                 String        @id @default(uuid())
+  title              String
+  top_description    String?
+  bottom_description String?
+  is_section_visible Boolean       @default(true)
+  section_width      SectionWidth? @default(center)
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
+  updated_by_id      String?
+  description        String?
+  cohort             Cohort?
+  updated_by         User?         @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortBenefitsSection {
+  id                 String               @id @default(uuid())
+  title              String
+  top_description    String?
+  bottom_description String?
+  section_width      SectionWidth?        @default(center)
+  is_section_visible Boolean              @default(true)
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  updated_by_id      String?
+  cohort             Cohort?
+  benefits_items     CohortBenefitsItem[]
+  updated_by         User?                @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortBenefitsItem {
+  id                 String                @id @default(uuid())
+  title              String
+  description        String?
+  icon_image_url     String?
+  parent_section_id  String
+  created_at         DateTime              @default(now())
+  updated_at         DateTime              @updatedAt
+  updated_by_id      String?
+  bottom_description String?
+  top_description    String?
+  parent_section     CohortBenefitsSection @relation(fields: [parent_section_id], references: [id])
+  updated_by         User?                 @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortCurriculumSection {
+  id                 String                 @id @default(uuid())
+  title              String
+  top_description    String?
+  bottom_description String?
+  section_width      SectionWidth?          @default(center)
+  is_section_visible Boolean                @default(true)
+  created_at         DateTime               @default(now())
+  updated_at         DateTime               @updatedAt
+  updated_by_id      String?
+  cohort             Cohort?
+  items              CohortCurriculumItem[]
+  updated_by         User?                  @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortCurriculumItem {
+  id                String                  @id @default(uuid())
+  title             String
+  parent_section_id String
+  created_at        DateTime                @default(now())
+  updated_at        DateTime                @updatedAt
+  updated_by_id     String?
+  description       String?
+  parent_section    CohortCurriculumSection @relation(fields: [parent_section_id], references: [id])
+  updated_by        User?                   @relation(fields: [updated_by_id], references: [id])
+}
+
+model DesignCohortCurriculumSection {
+  id                 String                              @id @default(uuid())
+  title              String
+  is_section_visible Boolean                             @default(true)
+  created_at         DateTime                            @default(now())
+  updated_at         DateTime                            @updatedAt
+  updated_by_id      String?
+  overview           String?
+  bottom_description String?
+  top_description    String?
+  cohort             Cohort?
+  updated_by         User?                               @relation(fields: [updated_by_id], references: [id])
+  items              DesignCohortCurriculumSectionItem[]
+}
+
+model DesignCohortCurriculumSectionItem {
+  id                String                            @id @default(uuid())
+  title             String
+  parent_section_id String
+  position          Int                               @default(0)
+  created_at        DateTime                          @default(now())
+  updated_at        DateTime                          @updatedAt
+  updated_by_id     String?
+  overview          String?
+  objectives        DesignCohortCurriculumObjective[]
+  parent_section    DesignCohortCurriculumSection     @relation(fields: [parent_section_id], references: [id])
+  updated_by        User?                             @relation(fields: [updated_by_id], references: [id])
+  sessions          DesignCohortCurriculumSession[]
+}
+
+model DesignCohortCurriculumObjective {
+  id                              String                             @id @default(uuid())
+  description                     String
+  parent_section_id               String?
+  position                        Int                                @default(0)
+  created_at                      DateTime                           @default(now())
+  updated_at                      DateTime                           @updatedAt
+  designCohortCurriculumSessionId String?
+  updated_by_id                   String?
+  DesignCohortCurriculumSession   DesignCohortCurriculumSession?     @relation(fields: [designCohortCurriculumSessionId], references: [id])
+  parent_section                  DesignCohortCurriculumSectionItem? @relation(fields: [parent_section_id], references: [id])
+  updated_by                      User?                              @relation(fields: [updated_by_id], references: [id])
+}
+
+model DesignCohortCurriculumSession {
+  id                String                             @id @default(uuid())
+  title             String
+  position          Int                                @default(0)
+  created_at        DateTime                           @default(now())
+  updated_at        DateTime                           @updatedAt
+  parent_section_id String?
+  updated_by_id     String?
+  overview          String?
+  objectives        DesignCohortCurriculumObjective[]
+  parent_section    DesignCohortCurriculumSectionItem? @relation(fields: [parent_section_id], references: [id])
+  updated_by        User?                              @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortStatisticsSection {
+  id                      String                              @id @default(uuid())
+  title                   String
+  top_description         String?
+  bottom_description      String?
+  work_experience_item_id String?                             @unique
+  industry_item_id        String?                             @unique
+  designation_item_id     String?                             @unique
+  company_item_id         String?                             @unique
+  is_section_visible      Boolean                             @default(true)
+  section_width           SectionWidth?                       @default(center)
+  created_at              DateTime                            @default(now())
+  updated_at              DateTime                            @updatedAt
+  updated_by_id           String?
+  cohort                  Cohort?
+  company_item            CohortStatisticsCompanyItem?        @relation(fields: [company_item_id], references: [id])
+  designation_item        CohortStatisticsDesignationItem?    @relation(fields: [designation_item_id], references: [id])
+  industry_item           CohortStatisticsIndustryItem?       @relation(fields: [industry_item_id], references: [id])
+  updated_by              User?                               @relation(fields: [updated_by_id], references: [id])
+  work_experience_item    CohortStatisticsWorkExperienceItem? @relation(fields: [work_experience_item_id], references: [id])
+}
+
+model CohortStatisticsWorkExperienceItem {
+  id              String                   @id @default(uuid())
+  title           String
+  description     String?
+  chart_image_url String?
+  created_at      DateTime                 @default(now())
+  updated_at      DateTime                 @updatedAt
+  updated_by_id   String?
+  parent_section  CohortStatisticsSection?
+  updated_by      User?                    @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortStatisticsIndustryItem {
+  id             String                   @id @default(uuid())
+  title          String
+  description    String?
+  data_list_id   String
+  created_at     DateTime                 @default(now())
+  updated_at     DateTime                 @updatedAt
+  updated_by_id  String?
+  data_list      ContentListBlock         @relation(fields: [data_list_id], references: [id])
+  updated_by     User?                    @relation(fields: [updated_by_id], references: [id])
+  parent_section CohortStatisticsSection?
+}
+
+model CohortStatisticsDesignationItem {
+  id             String                   @id @default(uuid())
+  title          String
+  description    String?
+  data_list_id   String
+  created_at     DateTime                 @default(now())
+  updated_at     DateTime                 @updatedAt
+  updated_by_id  String?
+  data_list      ContentListBlock         @relation(fields: [data_list_id], references: [id])
+  updated_by     User?                    @relation(fields: [updated_by_id], references: [id])
+  parent_section CohortStatisticsSection?
+}
+
+model CohortStatisticsCompanyItem {
+  id                 String                   @id @default(uuid())
+  title              String
+  top_description    String?
+  bottom_description String?
+  section_width      SectionWidth?            @default(center)
+  image_url          String?
+  created_at         DateTime                 @default(now())
+  updated_at         DateTime                 @updatedAt
+  updated_by_id      String?
+  updated_by         User?                    @relation(fields: [updated_by_id], references: [id])
+  parent_section     CohortStatisticsSection?
+}
+
+model CohortFacultySection {
+  id                 String                     @id @default(uuid())
+  title              String
+  top_description    String?
+  bottom_description String?
+  section_width      SectionWidth?              @default(center)
+  is_section_visible Boolean                    @default(true)
+  created_at         DateTime                   @default(now())
+  updated_at         DateTime                   @updatedAt
+  updated_by_id      String?
+  cohort             Cohort?
+  updated_by         User?                      @relation(fields: [updated_by_id], references: [id])
+  items              CohortFacultySectionItem[]
+}
+
+model CohortFacultySectionItem {
+  id                String               @id @default(uuid())
+  position          Int
+  facultyId         String
+  parent_section_id String
+  created_at        DateTime             @default(now())
+  updated_at        DateTime             @updatedAt
+  updated_by_id     String?
+  faculty           Faculty              @relation(fields: [facultyId], references: [id])
+  parent_section    CohortFacultySection @relation(fields: [parent_section_id], references: [id])
+  updated_by        User?                @relation(fields: [updated_by_id], references: [id])
+
+  @@unique([facultyId, parent_section_id])
+}
+
+model CohortIndustryExpertsSection {
+  id                 String                             @id @default(uuid())
+  title              String
+  top_description    String?
+  bottom_description String?
+  section_width      SectionWidth?                      @default(center)
+  is_section_visible Boolean                            @default(true)
+  created_at         DateTime                           @default(now())
+  updated_at         DateTime                           @updatedAt
+  updated_by_id      String?
+  cohort             Cohort?
+  updated_by         User?                              @relation(fields: [updated_by_id], references: [id])
+  items              CohortIndustryExpertsSectionItem[]
+}
+
+model CohortIndustryExpertsSectionItem {
+  id                String                       @id @default(uuid())
+  position          Int
+  facultyId         String
+  parent_section_id String
+  created_at        DateTime                     @default(now())
+  updated_at        DateTime                     @updatedAt
+  updated_by_id     String?
+  faculty           Faculty                      @relation(fields: [facultyId], references: [id])
+  parent_section    CohortIndustryExpertsSection @relation(fields: [parent_section_id], references: [id])
+  updated_by        User?                        @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortCertificationSection {
+  id                    String   @id @default(uuid())
+  title                 String
+  top_description       String?
+  bottom_description    String?
+  certificate_image_url String?
+  is_section_visible    Boolean  @default(true)
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+  updated_by_id         String?
+  cohort                Cohort?
+  updated_by            User?    @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortTestimonialSection {
+  id                 String                  @id @default(uuid())
+  title              String
+  description        String?
+  is_section_visible Boolean                 @default(true)
+  section_width      SectionWidth?           @default(center)
+  created_at         DateTime                @default(now())
+  updated_at         DateTime                @updatedAt
+  updated_by_id      String?
+  bottom_description String?
+  top_description    String?
+  cohort             Cohort?
+  items              CohortTestimonialItem[]
+  updated_by         User?                   @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortTestimonialItem {
+  id                String                   @id @default(uuid())
+  title             String
+  quote             String
+  user_image_url    String?
+  user_name         String
+  user_designation  String
+  user_company      String
+  parent_section_id String
+  position          Int
+  created_at        DateTime                 @default(now())
+  updated_at        DateTime                 @updatedAt
+  updated_by_id     String?
+  parent_section    CohortTestimonialSection @relation(fields: [parent_section_id], references: [id])
+  updated_by        User?                    @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortWhoShouldApplySection {
+  id                 String        @id @default(uuid())
+  title              String
+  description        String?
+  section_width      SectionWidth? @default(center)
+  is_section_visible Boolean       @default(true)
+  created_at         DateTime      @default(now())
+  updated_at         DateTime      @updatedAt
+  updated_by_id      String?
+  bottom_description String?
+  top_description    String?
+  cohort             Cohort?
+  updated_by         User?         @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortGenericSection {
+  id                    String              @id @default(uuid())
+  title                 String
+  description           String?
+  top_description       String?
+  banner_image_url      String?
+  banner_image_position BannerImagePosition @default(left)
+  bottom_description    String?
+  is_section_visible    Boolean             @default(true)
+  created_at            DateTime            @default(now())
+  updated_at            DateTime            @updatedAt
+  updated_by_id         String?
+  cohort_id             String?
+  cohort                Cohort?             @relation(fields: [cohort_id], references: [id])
+  updated_by            User?               @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortSectionOrder {
+  id               String            @id @default(uuid())
+  section_type     CohortSectionType
+  section_position Int
+  section_id       String
+  cohort_id        String
+  created_at       DateTime          @default(now())
+  updated_at       DateTime          @updatedAt
+  updated_by_id    String
+  cohort           Cohort            @relation(fields: [cohort_id], references: [id])
+  updated_by       User              @relation(fields: [updated_by_id], references: [id])
+
+  @@unique([cohort_id, section_type, section_id])
+}
+
+model ContentActionBlock {
+  id            String                 @id @default(uuid())
+  title         String
+  url           String
+  text          String
+  target        ContentActionBlockType @default(primary)
+  created_at    DateTime               @default(now())
+  updated_at    DateTime               @updatedAt
+  updated_by_id String?
+  updated_by    User?                  @relation(fields: [updated_by_id], references: [id])
+}
+
+model ContentListBlock {
+  id                              String                            @id @default(uuid())
+  title                           String
+  description                     String?
+  created_at                      DateTime                          @default(now())
+  updated_at                      DateTime                          @updatedAt
+  updated_by_id                   String?
+  CohortStatisticsDesignationItem CohortStatisticsDesignationItem[]
+  CohortStatisticsIndustryItem    CohortStatisticsIndustryItem[]
+  updated_by                      User?                             @relation(fields: [updated_by_id], references: [id])
+  items                           ContentListItem[]
+}
+
+model ContentListItem {
+  id                 String            @id @default(uuid())
+  title              String
+  description        String?
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+  contentListBlockId String?
+  updated_by_id      String?
+  ContentListBlock   ContentListBlock? @relation(fields: [contentListBlockId], references: [id])
+  updated_by         User?             @relation(fields: [updated_by_id], references: [id])
+}
+
+model CohortFee {
+  id            String   @id @default(uuid())
+  amount        Int
+  currency_id   String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  updated_by_id String?
+  currency      Currency @relation(fields: [currency_id], references: [id])
+  updated_by    User?    @relation(fields: [updated_by_id], references: [id])
+  cohorts       Cohort[] @relation("CohortToCohortFee")
+}
+
+model Currency {
+  id            String      @id @default(uuid())
+  name          String
+  symbol        String
+  code          String      @unique
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  updated_by_id String?
+  CohortFee     CohortFee[]
+  updated_by    User?       @relation(fields: [updated_by_id], references: [id])
+}
+
+model FacultySubjectArea {
+  id                String                  @id @default(uuid())
+  name              String                  @unique
+  description       String?
+  created_at        DateTime                @default(now())
+  updated_at        DateTime                @updatedAt
+  updated_by_id     String?
+  faculty           Faculty[]
+  sub_subject_areas FacultySubSubjectArea[]
+  updated_by        User?                   @relation(fields: [updated_by_id], references: [id])
+}
+
+model FacultySubSubjectArea {
+  id              String             @id @default(uuid())
+  name            String             @unique
+  description     String?
+  subject_area_id String
+  created_at      DateTime           @default(now())
+  updated_at      DateTime           @updatedAt
+  updated_by_id   String?
+  subject_area    FacultySubjectArea @relation(fields: [subject_area_id], references: [id])
+  updated_by      User?              @relation(fields: [updated_by_id], references: [id])
+  faculty         Faculty[]          @relation("FacultyToFacultySubSubjectArea")
+}
+
+model Faculty {
+  id                                    String                             @id @default(uuid())
+  name                                  String
+  preferred_name                        String?
+  title                                 String?
+  email                                 String
+  phone                                 String
+  description                           String?
+  note                                  String?
+  profile_image                         String?
+  academic_partner_id                   String?
+  created_at                            DateTime                           @default(now())
+  updated_at                            DateTime                           @updatedAt
+  faculty_type                          FacultyType                        @default(PROFESSOR_TIER_1)
+  faculty_code_id                       String?
+  facultySubjectAreaId                  String?
+  updated_by_id                         String?
+  cohort_faculty_section_items          CohortFacultySectionItem[]
+  cohort_industry_experts_section_items CohortIndustryExpertsSectionItem[]
+  academic_partner                      AcademicPartner?                   @relation(fields: [academic_partner_id], references: [id])
+  faculty_subject_area                  FacultySubjectArea?                @relation(fields: [facultySubjectAreaId], references: [id])
+  faculty_code                          FacultyCode?                       @relation(fields: [faculty_code_id], references: [id])
+  updated_by                            User?                              @relation(fields: [updated_by_id], references: [id])
+  faculty_subject_areas                 FacultySubSubjectArea[]            @relation("FacultyToFacultySubSubjectArea")
+  news_items                            NewsItem[]                         // Newsletter system
+}
+
+model FacultyCode {
+  id            String    @id @default(uuid())
+  name          String    @unique
+  description   String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  updated_by_id String?
+  Faculty       Faculty[]
+  updated_by    User?     @relation(fields: [updated_by_id], references: [id])
+}
+
+model UserRole {
+  id         String   @id @default(uuid())
+  role       Role     @default(User)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  users      User[]   @relation("UserToUserRole")
+}
+
+model User {
+  id                                             String                               @id @default(cuid())
+  name                                           String?
+  email                                          String?                              @unique
+  username                                       String?                              @unique
+  emailVerified                                  DateTime?
+  image                                          String?
+  createdAt                                      DateTime                             @default(now())
+  updatedAt                                      DateTime                             @updatedAt
+  academic_partners_updated                      AcademicPartner[]
+  accounts                                       Account[]
+  Authenticator                                  Authenticator[]
+  cohorts_owned                                  Cohort[]                             @relation("owner")
+  cohorts_updated                                Cohort[]                             @relation("updated_by")
+  cohort_benefits_item_updated                   CohortBenefitsItem[]
+  cohort_benefits_section_updated                CohortBenefitsSection[]
+  cohort_branding_updated                        CohortBranding[]
+  cohort_certification_section_updated           CohortCertificationSection[]
+  cohort_curriculum_item_updated                 CohortCurriculumItem[]
+  cohort_curriculum_section_updated              CohortCurriculumSection[]
+  cohort_faculty_section_updated                 CohortFacultySection[]
+  cohort_faculty_section_item_updated            CohortFacultySectionItem[]
+  cohort_fee_updated                             CohortFee[]
+  cohort_generic_section_updated                 CohortGenericSection[]
+  cohort_industry_experts_section_updated        CohortIndustryExpertsSection[]
+  cohort_industry_experts_section_item_updated   CohortIndustryExpertsSectionItem[]
+  cohort_media_section_updated                   CohortMediaSection[]
+  cohort_overview_section_updated                CohortOverviewSection[]
+  cohort_section_microsite_section_updated       CohortSectionMicrositeSection[]
+  cohort_section_order_updated                   CohortSectionOrder[]
+  CohortStatisticsCompanyItem                    CohortStatisticsCompanyItem[]
+  cohort_statistics_designation_item_updated     CohortStatisticsDesignationItem[]
+  cohort_statistics_industry_item_updated        CohortStatisticsIndustryItem[]
+  cohort_statistics_section_updated              CohortStatisticsSection[]
+  cohort_statistics_work_experience_item_updated CohortStatisticsWorkExperienceItem[]
+  cohort_testimonial_item_updated                CohortTestimonialItem[]
+  cohort_testimonial_section_updated             CohortTestimonialSection[]
+  cohort_who_should_apply_section_updated        CohortWhoShouldApplySection[]
+  content_action_block_updated                   ContentActionBlock[]
+  content_colors_block_updated                   ContentColorsBlock[]
+  content_list_block_updated                     ContentListBlock[]
+  content_list_item_updated                      ContentListItem[]
+  currency_updated                               Currency[]
+  design_cohort_curriculum_objective_updated     DesignCohortCurriculumObjective[]
+  design_cohort_curriculum_section_updated       DesignCohortCurriculumSection[]
+  design_cohort_curriculum_section_item_updated  DesignCohortCurriculumSectionItem[]
+  design_cohort_curriculum_session_updated       DesignCohortCurriculumSession[]
+  enterprises_updated                            Enterprise[]
+  faculties_updated                              Faculty[]
+  faculty_code_updated                           FacultyCode[]
+  faculty_sub_subject_area_updated               FacultySubSubjectArea[]
+  faculty_subject_area_updated                   FacultySubjectArea[]
+  list_updated                                   List[]
+  microsite_pages_updated                        MicrositePages[]
+  program_updated                                Program[]
+  sessions                                       Session[]
+  roles                                          UserRole[]                           @relation("UserToUserRole")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+model Authenticator {
+  credentialID         String  @unique
+  userId               String
+  providerAccountId    String
+  credentialPublicKey  String
+  counter              Int
+  credentialDeviceType String
+  credentialBackedUp   Boolean
+  transports           String?
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, credentialID])
+}
+
+// Newsletter System Models
+
+model Participant {
+  id                    String      @id @default(uuid())
+  name                  String
+  email                 String      @unique
+  linkedin_url          String?
+  linkedin_pdf_path     String?     // Path to downloaded LinkedIn PDF
+  last_linkedin_update  DateTime?   // When PDF was last processed
+  
+  cohort_id             String
+  cohort                Cohort      @relation(fields: [cohort_id], references: [id])
+  
+  created_at            DateTime    @default(now())
+  updated_at            DateTime    @updatedAt
+  
+  news_items            NewsItem[]
+  
+  @@index([cohort_id])
+  @@index([email])
+}
+
+model NewsItem {
+  id                String          @id @default(uuid())
+  type              NewsType        // FACULTY, UNIVERSITY, PARTICIPANT
+  source_url        String
+  title             String
+  summary           String?         @db.Text
+  content           String?         @db.Text
+  published_date    DateTime?
+  scraped_at        DateTime        @default(now())
+  
+  // Relations (one of these will be set based on type)
+  faculty_id        String?
+  faculty           Faculty?        @relation(fields: [faculty_id], references: [id])
+  
+  university_id     String?
+  university        AcademicPartner? @relation(fields: [university_id], references: [id])
+  
+  participant_id    String?
+  participant       Participant?    @relation(fields: [participant_id], references: [id])
+  
+  cohort_id         String?
+  cohort            Cohort?         @relation(fields: [cohort_id], references: [id])
+  
+  // Metadata
+  keywords          String[]
+  sentiment         String?         @default("positive")
+  is_processed      Boolean         @default(false)
+  
+  @@index([type, scraped_at])
+  @@index([cohort_id, scraped_at])
+  @@index([is_processed])
+}
+
+model NewsletterSent {
+  id                String      @id @default(uuid())
+  cohort_id         String
+  cohort            Cohort      @relation(fields: [cohort_id], references: [id])
+  
+  sent_at           DateTime    @default(now())
+  week_start        DateTime
+  week_end          DateTime
+  
+  recipient_count   Int         @default(0)
+  news_item_count   Int         @default(0)
+  
+  status            NewsletterStatus @default(PENDING)
+  error_message     String?     @db.Text
+  
+  @@index([cohort_id, sent_at])
+  @@index([status])
+}
+
+model SemanticIndex {
+  id        String   @id @default(uuid())
+  type      String
+  ref_id    String
+  content   String?
+  embedding Bytes?
+}
+
+model ChatSession {
+  id              String   @id @default(uuid())
+  session_id      String   @unique
+  username        String
+  created_at      DateTime @default(now())
+  last_activity_at DateTime @default(now())
+  expires_at      DateTime
+  chats           Chat[]
+
+  @@index([session_id])
+  @@index([expires_at])
+}
+
+model Chat {
+  id                String      @id @default(uuid())
+  session_id        String
+  question          String      @db.Text
+  raw_response      String?     @db.Text
+  formatted_response String     @db.Text
+  sql_query         String?     @db.Text
+  username          String
+  created_at        DateTime    @default(now())
+  session           ChatSession @relation(fields: [session_id], references: [session_id], onDelete: Cascade)
+
+  @@index([session_id])
+  @@index([created_at])
+}
+
+
+enum WorkStatus {
+  DRAFT
+  PLANNING
+  ACTIVE
+  ARCHIVED
+}
+
+enum ProgramStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+enum ProgramType {
+  OPEN
+  CUSTOM
+  EXTERNAL
+}
+
+enum SectionWidth {
+  center
+  full
+}
+
+enum BannerImagePosition {
+  top
+  bottom
+  center
+  left
+  right
+}
+
+enum CohortSectionType {
+  overview_section
+  benefits_section
+  design_curriculum_section
+  faculty_section
+  industry_experts_section
+  statistics_section
+  certification_section
+  testimonial_section
+  who_should_apply_section
+  custom_section
+}
+
+enum ContentActionBlockType {
+  primary
+  secondary
+  link
+}
+
+enum FacultyType {
+  PROFESSOR_TIER_1
+  PROFESSOR_TIER_2
+  PROFESSOR_TIER_3
+  COACH
+  SUCCESS_COACH
+}
+
+enum Role {
+  Admin
+  User
+}
+
+enum NewsType {
+  FACULTY
+  UNIVERSITY
+  PARTICIPANT
+}
+
+enum NewsletterStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+  PARTIAL
+}

@@ -1,0 +1,40 @@
+{
+  "name": "distant-plasma",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "gather-news": "ts-node src/scripts/gather_cornell_news.ts",
+    "gather-all-news": "ts-node src/scripts/gather_all_news.ts",
+    "gather-faculty-news": "ts-node src/scripts/gather_faculty_news.ts",
+    "test-search": "ts-node src/scripts/test_search_patterns.ts",
+    "test-linkedin-pdf": "ts-node src/scripts/test-linkedin-pdf.ts",
+    "analyze-linkedin": "ts-node src/scripts/analyze-linkedin-profile.ts",
+    "test-weekly-news": "ts-node src/scripts/test-weekly-news-gathering.ts",
+    "test-google-api": "ts-node src/scripts/test-google-search-api.ts",
+    "test-linkedin-url": "ts-node src/scripts/test-linkedin-url-scraping.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@prisma/client": "^6.19.1",
+    "@types/cheerio": "^0.22.35",
+    "@types/node": "^25.0.3",
+    "@types/pdf-parse": "^1.1.5",
+    "axios": "^1.13.2",
+    "cheerio": "^1.1.0",
+    "dotenv": "^17.2.3",
+    "pdf-parse": "^2.2.2",
+    "prisma": "^6.19.1",
+    "puppeteer": "^24.34.0",
+    "rss-parser": "^3.13.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "canvas": "^3.2.0"
+  }
+}
